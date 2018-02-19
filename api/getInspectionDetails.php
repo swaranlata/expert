@@ -26,6 +26,7 @@ if(!empty($scheduleList)){
             }
            $finalResponse['clientName']=$name;
            $finalResponse['clientId']=$clientDetails['client']['id'];
+           $finalResponse['isSubmit']=(string) getSubmittedStatus($data['inspectionId']);
            $finalResponse['phoneNumber']=$mobile;
            $finalResponse['email']=$email;
            $finalResponse['address1']=$clientDetails['client']['address1'];

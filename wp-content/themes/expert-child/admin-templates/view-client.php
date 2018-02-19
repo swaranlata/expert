@@ -11,18 +11,19 @@ window.location.href='<?php echo admin_url().'admin.php?page=clients'; ?>';
 <?php
   }  
 }else{
+    
     ?>
 <script>
 window.location.href='<?php echo admin_url().'admin.php?page=clients'; ?>';
 </script>
 <?php
 }
-
+$clientInspectionDetails=getClientInspectionDetails($getClient['clientId']);
 ?>
 <div class="wrap">
     <h1>View Client Details</h1>
     <div id="MainView">
-        <a class="editInspectionCladd" href="<?php echo admin_url().'/admin.php?page=editInspection&inspectionId='.$_GET['inspectionId']; ?>">Edit Client</a>
+        <a style="float:right;" class="editInspectionCladd button button-primary" href="<?php echo admin_url().'/admin.php?page=editInspection&inspectionId='.$_GET['inspectionId']; ?>">Edit Client</a>
         <table class="dataTable" cellpadding="10">
             <tbody>
                 <tr>
@@ -48,103 +49,103 @@ window.location.href='<?php echo admin_url().'admin.php?page=clients'; ?>';
                 </tr><tr>
                     <td>Client Name :</td>
                     <td>
-                        <?php echo $getClient['jobNumber'];?>
+                        <?php echo $clientInspectionDetails['jobNumber'];?>
                     </td>
                 </tr><tr>
                     <td>Date :</td>
                     <td>
-                        <?php echo $getClient['date'];?>
+                        <?php echo date('d M,Y',strtotime($clientInspectionDetails['date']));?>
                     </td>
                 </tr><tr>
                     <td>Time :</td>
                     <td>
-                        <?php echo $getClient['time'];?>
+                        <?php echo $clientInspectionDetails['time'];?>
                     </td>
                 </tr><tr>
                     <td>Rehabbed After Years? :</td>
                     <td>
-                        <?php echo $getClient['rehabbedAfterYear'];?>
+                        <?php echo $clientInspectionDetails['rehabbedAfterYear'];?>
                     </td>
                 </tr>
                 <tr>
                     <td>Inspection Type :</td>
                     <td>
-                        <?php echo $getClient['inspectionType'];?>
+                        <?php echo $clientInspectionDetails['inspectionType'];?>
                     </td>
                 </tr> 
                 <tr>
                     <td>Payment Type :</td>
                     <td>
-                        <?php echo $getClient['paymentType'];?>
+                        <?php echo $clientInspectionDetails['paymentType'];?>
                     </td>
                 </tr>
                 <tr>
                     <td>Inspection Date :</td>
                     <td>
-                        <?php echo $getClient['inspectionDate'];?>
+                        <?php echo date('d M,Y',strtotime($clientInspectionDetails['inspectionDate']));?>
                     </td>
                 </tr><tr>
                     <td>Inspection Time :</td>
                     <td>
-                        <?php echo $getClient['inspectionTime'];?>
+                        <?php echo $clientInspectionDetails['inspectionTime'];?>
                     </td>
                 </tr><tr>
                     <td>Isn Notes :</td>
                     <td>
-                        <?php echo $getClient['isnNotes'];?>
+                        <?php echo $clientInspectionDetails['isnNotes'];?>
                     </td>
                 </tr><tr>
                     <td>Insuarance Company :</td>
                     <td>
-                        <?php echo $getClient['insuaranceCompany'];?>
+                        <?php echo $clientInspectionDetails['insuaranceCompany'];?>
                     </td>
                 </tr><tr>
                     <td>Policy Number :</td>
                     <td>
-                        <?php echo $getClient['policyNumber'];?>
+                        <?php echo $clientInspectionDetails['policyNumber'];?>
                     </td>
                 </tr><tr>
                     <td>Claim :</td>
                     <td>
-                        <?php echo $getClient['claim'];?>
+                        <?php echo $clientInspectionDetails['claim'];?>
                     </td>
                 </tr>
               <tr>
                     <td>Insurance Adjuster :</td>
                     <td>
-                        <?php echo $getClient['insuaranceAdjuster'];?>
+                        <?php echo $clientInspectionDetails['insuaranceAdjuster'];?>
                     </td>
                 </tr><tr>
                     <td>Claim Count :</td>
                     <td>
-                        <?php echo $getClient['claimCount'];?>
+                        <?php echo $clientInspectionDetails['claimCount'];?>
                     </td>
                 </tr><tr>
                     <td>Date of Loss :</td>
                     <td>
-                        <?php echo $getClient['dateOfLoss'];?>
+                        <?php echo date('d M,Y',strtotime($clientInspectionDetails['dateOfLoss']));?>
                     </td>
                 </tr><tr>
                     <td>Type of Loss :</td>
                     <td>
-                        <?php echo $getClient['typeOfLoss'];?>
+                        <?php echo $clientInspectionDetails['typeOfLoss'];?>
                     </td>
                 </tr><tr>
                     <td>Remedetiation Company :</td>
                     <td>
-                        <?php echo $getClient['remedeationCompany'];?>
+                        <?php echo $clientInspectionDetails['remedeationCompany'];?>
                     </td>
                 </tr>
                 <tr>
                     <td>Public Adjuster :</td>
                     <td>
-                        <?php echo $getClient['publicAdjuster'];?>
+                        <?php echo $clientInspectionDetails['publicAdjuster'];?>
                     </td>
                 </tr>
                 <tr>
                     <td>Referal Source :</td>
                     <td>
-                        <?php echo $getClient['referralSource'];?>
+                        <?php echo $clientInspectionDetails['referralSource'];?>
                     </td>
                 </tr>
                 <tr>

@@ -28,12 +28,13 @@ if(isset($records['status']) and $records['status']=='ok'){
                     update_user_meta($user_id,'last_name',$records['me']['lastname']);
                     update_user_meta($user_id,'deviceToken',$data['deviceToken']);  
                     update_user_meta($user_id,'deviceType',$data['deviceType']);  
+                    update_user_meta($user_id,'isnServerUserId',$records['me']['id']);
                     $u = new WP_User($user_id);
                     $u->remove_role('subscriber');
                     $u->set_role('inspector');                   
                 }
         else{
-                     $user_id = wp_create_user($username,$password,$records['me']['emailaddress']);
+                    $user_id = wp_create_user($username,$password,$records['me']['emailaddress']);
                      wp_update_user(array(
                      'ID' => $user_id,
                      'display_name' => $records['me']['firstname'].' '.$records['me']['lastname']
@@ -44,9 +45,11 @@ if(isset($records['status']) and $records['status']=='ok'){
                     update_user_meta($user_id,'deviceType',$data['deviceType']);  
                     update_user_meta($user_id,'is_enable_notification',1);  
                     update_user_meta($user_id,'admin_color','coffee');
+                    update_user_meta($user_id,'isnServerUserId',$records['me']['id']);
                 }
         $finalArray=$records['me'];
         $finalArray['userId']=(string) $user_id;
+        $finalArray['isnServerUserId']=(string) get_user_meta($user_id,'isnServerUserId',true);
         $finalArray['is_enable_notification']=(string) get_user_meta($user_id,'is_enable_notification',true);
         response(1,$finalArray,'No Error Found.');   
     }else{

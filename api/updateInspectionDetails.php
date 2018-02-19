@@ -14,9 +14,9 @@ if($roles!='inspector'){
 if(empty($data['inspectionDate'])){
   response(0,null,'Please enter the inspection date.');
 }
-$saveDetails=saveInspectionDetails($data);
-if(!empty($saveDetails)){
-    response(1,$saveDetails,'No Error Found.');
+$updateInspectionDetails=updateInspectionDetails($data);
+if(!empty($updateInspectionDetails)){
+    response(1,$updateInspectionDetails,'No Error Found.');
 }else{
     response(0,null,'Something wrong please try again later.'); 
 }

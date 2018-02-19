@@ -31,6 +31,7 @@ if(!empty($chats)){
         $allChats[$i]['username']=get_user_meta($vv['senderId'],'first_name',true).' '.get_user_meta($vv['senderId'],'last_name',true);
         $allChats[$i]['messageId']=$vv['id'];
         $allChats[$i]['message']=$vv['message'];
+        $allChats[$i]['inspectionId']=getConversationIdByInspection($vv['conversationId']);
         $allChats[$i]['file']=$vv['file'];
         $allChats[$i]['dateTime']=$vv['created'];
         $allChats[$i]['date']=date('d/m/y',strtotime($vv['created']));

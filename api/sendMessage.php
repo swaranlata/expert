@@ -1,7 +1,5 @@
 <?php
 require '../wp-config.php';
-/*$encoded_data = file_get_contents('php://input');
-$data = json_decode($encoded_data,true);*/
 $data=$_POST;
 $error=1;
 global $wpdb;
@@ -9,6 +7,9 @@ if(empty($data['userId'])){
     $error=0;
 }
 if(empty($data['toUserId'])){
+    $error=0;
+}
+if(empty($data['inspectionId'])){
     $error=0;
 }
 if(empty($data['message']) and empty($_FILES['file']['name'])){
@@ -20,7 +21,7 @@ if(!empty($error)){
     if($data['userId']==$data['toUserId']){
       response(0,null,'Please cant send message to yourself.');    
     }    
-    $conversationId=getConversationId($data['userId'],$data['toUserId'],'inspector');
+    $conversationId=getConversationId($data['userId'],$data['toUserId'],$data['inspectionId'],'inspector');
     if(empty($conversationId)){
        response(0,null,'You cant send message to the selected user.');     
     }
@@ -38,6 +39,7 @@ if(!empty($error)){
     $chatMod['userId']=$chat['senderId'];
     $chatMod['toUserId']=$chat['receiverId'];
     $chatMod['messageId']=$chat['id'];
+    $chatMod['inspectionId']=getConversationIdByInspection($chat['conversationId']);
     $chatMod['message']=$chat['message'];     
     $chatMod['file']=$chat['file'];     
     $chatMod['dateTime']=$chat['created'];

@@ -9,7 +9,7 @@ if($user_roles[0]=='subscriber'){//reporter
 } elseif($user_roles[0]=='contributor') {
 	$getUserList=$wpdb->get_results('select * from `im_inspection_assignments`  where `qaId`="'.$currentUserId.'"',ARRAY_A);
 }
-
+$owner=getOwnerDetails();
 ?>
 <div class="wrap">
 	<div class="customAdmin">
@@ -21,7 +21,7 @@ if($user_roles[0]=='subscriber'){//reporter
 						<!--<div class="sideHead">General Chat</div>-->
 						<ul>
 							<?php
-								$chatUserId=array();
+								/* $chatUserId=array();
 								if(!empty($getUserList)) {
 									foreach($getUserList as $k=>$v) {
 										if($user_roles[0]=='subscriber') {//reporter
@@ -34,7 +34,7 @@ if($user_roles[0]=='subscriber'){//reporter
                                     $chatUserId=array_filter($chatUserId);
 								}
                             	if(!empty($chatUserId)) {
-                                    $chatUserId=array_unique($chatUserId);
+                                    //$chatUserId=array_unique($chatUserId);
 									$i = 0;
 									foreach($chatUserId as $k=>$v) {
 										$userInfo=get_user_by('id',$v);
@@ -46,16 +46,78 @@ if($user_roles[0]=='subscriber'){//reporter
 										<?php
 										$i++;
 									}
-								}
+								} */
+                            $chatUserId=array();
+                            if(!empty($getUserList)) {
+                                foreach($getUserList as $k=>$v) {
+                                    if($user_roles[0]=='subscriber') {//reporter
+                                        $chatUserId[]=$v;
+                                        $chatUserId[]=$v;
+                                    } elseif($user_roles[0]=='contributor') {//QA
+                                        $chatUserId[]=$v;
+                                    }
+                                }
+                                $chatUserId=array_filter($chatUserId);
+                            }
+                       
+                            if(!empty($chatUserId)){
+                                $i = 1;
+                                foreach($chatUserId as $k=>$v){
+                                    $temp=0;
+                                        if($user_roles[0]=='subscriber') {//reporter
+                                            if($i%2==0){
+                                              $userInfo=get_user_by('id',$v['inspectorId']);
+                                                $chatUserIdCrnt=$v['inspectorId'];
+                                                $getConversationId=getConversationIdOnly($v['reporterId'],$v['inspectorId'],$v['inspectionId']);
+                                            }else{
+                                                
+                                                if(!empty($v['qaId'])){
+                                                   $userInfo=get_user_by('id',$v['qaId']); 
+                                                     $chatUserIdCrnt=$v['qaId']; $getConversationId=getConversationIdOnly($v['reporterId'],$v['qaId'],$v['inspectionId']);
+                                                }else{
+                                                  $temp=1;  
+                                                }                                           
+                                            }                                        
+                                        }elseif($user_roles[0]=='contributor') {//QA
+                                           $userInfo=get_user_by('id',$v['reporterId']);
+                                             $chatUserIdCrnt=$v['reporterId'];
+                                            $getConversationId=getConversationIdOnly($v['qaId'],$v['reporterId'],$v['inspectionId']);
+                                        }
+                                        $class='';
+                                        if($k == 0) {
+                                            $class="active";
+                                        }
+                                            if(empty($temp)){
+                                                
+                                                $insIsnId= getInspectionIsnId($v['inspectionId']);
+                                                $insDetails= getInspectionDetailsById($insIsnId,$owner); 
+                                                $clientDetails= getClientDetailsById($insDetails['order']['client'],$owner);
+                                               
+                                                
+                                                
+                                            ?>
+										<li>
+                                                <a class="selectedUser <?php echo $class; ?>" href="javascript:void(0);" data-div-id="<?php echo $getConversationId;  ?>" data-attr-id="<?php echo $chatUserIdCrnt; ?>" data-attr-inspection="<?php echo $v['inspectionId']; ?>" data-link="link"><?php echo ucfirst($userInfo->data->display_name).'  ('. $clientDetails['client']['display'].')'; ?></a>
+
+                                          
+                                        </li>
+										<?php
+                                                    
+                                                   }
+										$i++;
+                                    
+                                }
+                                
+                            }
 							?>
 						</ul>
 					</div>
-				</div>
+				</div>   
 				<div class="col-md-9 order-2">
 					<div class="messageContainer brdr">
 						<!-- Just For the time using for -->
 						<?php
-						$chatUserId=array();
+					/*	$chatUserId=array();
 						if(!empty($getUserList)) {
 							foreach($getUserList as $k=>$v) {
 								if($user_roles[0]=='subscriber') {//reporter
@@ -75,7 +137,72 @@ if($user_roles[0]=='subscriber'){//reporter
 								<?php
 							}
 						}
-						?>
+						*/
+                        
+                         $chatUserId=array();
+                            if(!empty($getUserList)) {
+                                foreach($getUserList as $k=>$v) {
+                                    if($user_roles[0]=='subscriber') {//reporter
+                                        $chatUserId[]=$v;
+                                        $chatUserId[]=$v;
+                                    } elseif($user_roles[0]=='contributor') {//QA
+                                        $chatUserId[]=$v;
+                                    }
+                                }
+                                $chatUserId=array_filter($chatUserId);
+                            }
+                  
+                            if(!empty($chatUserId)){
+                                $i = 1;
+                                foreach($chatUserId as $k=>$v){
+                                    $temp=0;
+                                        if($user_roles[0]=='subscriber') {//reporter
+                                            if($i%2==0){
+                                              $userInfo=get_user_by('id',$v['inspectorId']);
+                                                $chatUserIdCrnt=$v['inspectorId'];
+                                                $getConversationId=getConversationIdOnly($v['reporterId'],$v['inspectorId'],$v['inspectionId']);
+                                            }else{
+                                                
+                                                if(!empty($v['qaId'])){
+                                                   $userInfo=get_user_by('id',$v['qaId']); 
+                                                     $chatUserIdCrnt=$v['qaId']; $getConversationId=getConversationIdOnly($v['reporterId'],$v['qaId'],$v['inspectionId']);
+                                                }else{
+                                                  $temp=1;  
+                                                }                                           
+                                            }                                        
+                                        }elseif($user_roles[0]=='contributor') {//QA
+                                           $userInfo=get_user_by('id',$v['reporterId']);
+                                             $chatUserIdCrnt=$v['reporterId'];
+                                            $getConversationId=getConversationIdOnly($v['qaId'],$v['reporterId'],$v['inspectionId']);
+                                        }
+                                        $class='';
+                                        if($k == 0) {
+                                            $class="active";
+                                        }
+                                            if(empty($temp)){
+                                                /*
+                                            ?>
+										<ul id="messageList<?php echo $getConversationId;?>" class="do-nicescroll3 messageList<?php if($k == 0) {echo ' active';} ?>" data-tab="link<?php echo $k; ?>"></ul>
+										<?php
+                                                    
+                                                 */  }
+										$i++;
+                                    
+                                }
+                                
+                            }
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        ?>
+                        <ul id="messageList" class="do-nicescroll3 messageList active" data-tab="link"></ul>
 						<!-- Just For the time using for -->
                         <?php  if(!empty($chatUserId)){
                                 ?>
@@ -84,6 +211,8 @@ if($user_roles[0]=='subscriber'){//reporter
 							<div class="inline-form">
 								<input type="hidden" id="toUserId" name="toUserId">
 								<input type="hidden"  name="action" value="send_message">
+								<input type="hidden"  id="inspectionId" name="inspectionId">
+								<input type="hidden"  id="divId" name="divId">
 								<div class="msgcon">
 									<input type="text" name="mgs">
 									<div class="fileCon">

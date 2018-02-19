@@ -121,7 +121,17 @@ $(document).ready(function(){
             success:function(response){
                 $('.loader').hide();
                 if(response.status=='true'){
-                                     
+                    $('.reponseDiv').html('<div class="alert alert-success"><p>'+response.message+'</p></div>');     
+                    $('.reponseDiv').show();
+                    setTimeout(function(){
+                       location.reload();
+                    },3000);
+                }else{
+                    $('.reponseDiv').html('<div class="alert alert-danger"><p>'+response.message+'</p></div>');  
+                    $('.reponseDiv').show();
+                     setTimeout(function(){
+                       location.reload();
+                    },3000);
                 }
             }
         });
@@ -191,18 +201,25 @@ $(document).ready(function(){
     $(document).on('click','.selectedUser',function(){
          $('.loader').show();
          var usrId=$(this).attr('data-attr-id');
+         var inspectionId=$(this).attr('data-attr-inspection');
+         var divId=$(this).attr('data-div-id');
          $('#toUserId').val(usrId);
+         $('#inspectionId').val(inspectionId);
+         $('#divId').val(divId);
          $.ajax({
             type:'post',
-            data:{usrId:usrId,action:'getMessages'},
+            data:{usrId:usrId,inspectionId:inspectionId,action:'getMessages'},
             url:SITE_URL+'/wp-admin/admin-ajax.php',
             success:function(response){   
                 $('.loader').hide();
                 if(response==''){
-                  $('#messageList'+usrId).html('<li>No Converation Found.</li>');  
+                  //$('#messageList'+divId).html('<li>No Converation Found.</li>');  
+                  $('#messageList').html('<li>No Converation Found.</li>');  
                 }else{
-                  $('#messageList'+usrId).html(response);
-                    $("#messageList"+usrId).scrollTop($("#messageList"+usrId).get(0).scrollHeight, -1); 
+                 // $('#messageList'+divId).html(response);
+                   // $("#messageList"+divId).scrollTop($("#messageList"+divId).get(0).scrollHeight, -1);     
+                    $('#messageList').html(response);
+                    $("#messageList").scrollTop($("#messageList").get(0).scrollHeight, -1); 
                 }
                 
             }
@@ -239,8 +256,9 @@ $(document).ready(function(){
             success:function(response){
                 $('.loader').hide();
                if(response.status=='true'){
+                 $('#divId').val(response.conversationId);
                  $('.messageDiv').html(response.message);   
-                 getMessageList(ToUSERID);
+                 getMessageList(ToUSERID,response.inspectionId,response.conversationId);
                  $('#chatForm')[0].reset();
                  setTimeout(function(){
                      $('.messageDiv').hide(); 
@@ -252,14 +270,18 @@ $(document).ready(function(){
     });
     setInterval(function(){
          var usrId=$('#toUserId').val();
+         var inspectionId=$('#inspectionId').val();
+         var divId=$('#divId').val();
          $.ajax({
             type:'post',
-            data:{usrId:usrId,action:'getMessagesAjax'},
+            data:{usrId:usrId,inspectionId:inspectionId,action:'getMessagesAjax'},
             url:SITE_URL+'/wp-admin/admin-ajax.php',
             success:function(response){     
                 if(response!=''){
-                   $('#messageList'+usrId).html(response); 
-                    $("#messageList"+userid).scrollTop($("#messageList"+userid).get(0).scrollHeight, -1);
+                  // $('#messageList'+divId).html(response); 
+                   // $("#messageList"+divId).scrollTop($("#messageList"+divId).get(0).scrollHeight, -1);
+                    $('#messageList').html(response); 
+                    $("#messageList").scrollTop($("#messageList").get(0).scrollHeight, -1);
                 }                                
             }
         }); 
@@ -285,7 +307,27 @@ $(document).ready(function(){
             }
         });       
     });
-
+    $(document).on('change','.assignNewReporter',function(){
+        var reporterId=$(this).val();
+        var inspectionId=$(this).prev().val();
+         $.ajax({
+            data: {reporterId:reporterId,inspectionId:inspectionId,action:'assignNewReporter'},
+            url:SITE_URL+'/wp-admin/admin-ajax.php',
+            type: 'POST',
+            dataType:'json',
+            success: function(response) {
+                $('.loading_image').hide();
+                if(response.status=='true'){
+                    $('.reponseDiv').html('<div class="alert alert-success" role="alert">'+response.message+'</div>');
+                    $('.reponseDiv').show();
+                    $('.reponseDiv').delay(2000).fadeOut(); 
+                    setTimeout(function(){
+                        location.reload();
+                    },1000);                    
+                }
+            }
+        });  
+    });
     $('.fileCon > label').on('click', function() {
         $(this).next().trigger('click');
     });
@@ -313,23 +355,26 @@ $(document).ready(function(){
             });
     });
 });
-function getMessageList(userid){
+function getMessageList(userid,inspectionId,divId){
         $.ajax({
             type:'post',
-            data:{usrId:userid,action:'getMessages'},
+            data:{usrId:userid,inspectionId:inspectionId,divId:divId,action:'getMessages'},
             url:SITE_URL+'/wp-admin/admin-ajax.php',
             success:function(response){   
                 if(response==''){
-                  $('#messageList'+usrId).html('<li>No Converation Found.</li>');   
+                 // $('#messageList'+divId).html('<li>No Converation Found.</li>');   
+                  $('#messageList').html('<li>No Converation Found.</li>');   
                 }else{
-                  $('#messageList'+userid).html(response); 
-                    $("#messageList"+userid).scrollTop($("#messageList"+userid).get(0).scrollHeight, -1);
+                 // $('#messageList'+divId).html(response); 
+                  $('#messageList').html(response); 
+                //  $("#messageList"+divId).scrollTop($("#messageList"+divId).get(0).scrollHeight, -1);
+                  $("#messageList").scrollTop($("#messageList").get(0).scrollHeight, -1);
                 }
                  
                                 
             }
         }); 
-}
+}    
 function readURL(input) {
     if (input.files && input.files[0]) {
         var reader = new FileReader();

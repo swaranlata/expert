@@ -88,3 +88,22 @@ a.editInspectionCladd.button.button-primary {float: right !important;}
 .imageContainerInner {background-position: center;background-repeat: no-repeat;background-size: cover;padding-bottom: calc(100% - 30px);position: relative;}
 .imageContainerInner span {background-color: #c7a589;border: 2px solid #c7a589;border-radius: 50%;color: #fff;cursor: pointer;font-size: 25px;height: 30px;line-height: 21px;position: absolute;right: 0;text-align: center;top: 0;-webkit-transform: translate(50%, -50%);-webkit-transition: all .25s ease-in-out;-ms-transform: translate(50%, -50%);-ms-transition: all .25s ease-in-out;transform: translate(50%, -50%);transition: all .25s ease-in-out;width: 30px;}
 .imageContainerInner span:focus, .imageContainerInner span:hover {background-color: #fff;color: #c7a589;}
+
+
+.notifications {margin-top: 40px;}
+.noti-head {display: table;margin-bottom: 10px;table-layout: fixed;width: 100%;}
+.noti-head > h2 {font-size: 16px;font-weight: 600;}
+.unreaded .noti-head > h2 {font-weight: 600;}
+.notificationWrapper span {font-weight: 600;}
+.markAsRead .noti-head > h2, .notificationWrapper .markAsRead span {font-weight: normal;}
+.noti-head > h2, .noti-head > div {color: #505050;display: table-cell;}
+.noti-head > h2 {text-transform: none;}
+.time {font-size: 16px;font-family: 'Lato', sans-serif;text-align: right;}
+.noti-con {font-family: 'Lato', sans-serif;font-size: 16px;}
+.noti-con p {margin-bottom: 0;}
+.notification {border-bottom: 1px solid #e5e5e5;display: inline-block;margin-bottom: 15px;padding-bottom: 15px;width: 100%;}
+.notificationWrapper + .notificationWrapper {border-top: 1px solid rgba(0, 0, 0, 0.2);box-shadow: inset 0px 1px 9px -5px rgba(0, 0, 0, 1);}
+.notificationWrapper a {padding: 10px 20px;}
+.notificationModule + .dropdown-menu {max-height: 300px;/* overflow: hidden;*/}
+span.deleteNoti {background-color: #c7a589;border: 1px solid #c7a589;border-radius: 50%;color: #fff;cursor: pointer;float: right;height: 20px;line-height: 0.9;margin-bottom: -8px;margin-right: 15px;text-align: center;-webkit-transition: all .25s linear;-ms-transition: all .25s linear;transition: all .25s linear;width: 20px;}
+span.deleteNoti:focus, span.deleteNoti:hover {background-color: #fff;color: #c7a589;}

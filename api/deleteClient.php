@@ -15,8 +15,11 @@ if($userRole!='inspector'){
 }
 $checkClient=$wpdb->get_row('select * from `im_clients` where `id`="'.$data['clientId'].'" and `inspectorId`="'.$data['userId'].'"',ARRAY_A);
 if(!empty($checkClient)){
-   $wpdb->query('delete from `im_clients` where `id`="'.$checkClient['id'].'"');
-   response(1,'Client deleted successfully.','No Error found.');       
+    $getOwnerDetails=getOwnerDetails();
+    $url=ISN_API.'client/'.$checkClient['clientId'].'?username='.$getOwnerDetails['username'].'&password='.$getOwnerDetails['password'];
+    $response=deleteUsingCurl($url);
+    $wpdb->query('delete from `im_clients` where `id`="'.$checkClient['id'].'"');
+    response(1,'Client deleted successfully.','No Error found.');       
 }else{
   response(0,null,'No Client found to delete.');       
 }

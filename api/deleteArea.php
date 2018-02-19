@@ -14,13 +14,15 @@ $roles=$loggedInUser->roles[0];
 if($roles!='inspector'){
     response(0,null,'You are not authorise to access this api.'); 
 }
-$query='select * from `im_areas` where `id`="'.$data['areaId'].'" and `opponentId`="'.$data['userId'].'"';
+$query='select * from `im_areas` where `id`="'.$data['areaId'].'"';
 $res=$wpdb->get_row($query,ARRAY_A);
 if(!empty($res)){
-    $query=$wpdb->query('delete from `im_notifications` where `id`="'.$res['id'].'"');
-    response(1,'Notification deleted successfully.','No Error Found.');   
+    $query=$wpdb->query('delete from `im_areas` where `id`="'.$res['id'].'"');
+    $wpdb->query('delete from `im_issues` where `areaId`="'.$res['id'].'"');
+    $wpdb->query('delete from `im_samples` where `areaId`="'.$res['id'].'"');
+    response(1,'Areas deleted successfully.','No Error Found.');   
 }else{
-   response(0,null,'No Notification found to delete.'); 
+    response(0,null,'No Area found to delete.'); 
 }
 
 ?>

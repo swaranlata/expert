@@ -133,14 +133,32 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
 							</td>
 						</tr>
 						<tr>
-							<?php $selectArray = array('AOC');?>
+                             <?php $samples=getSampleType(); ?>
+							<?php
+                            
+                           // $selectArray = array('AOC');
+                            ?>
 							<th scope="row">
 								<label for="exampleInputEmail1">Sample Type  :</label>
 							</th>
 							<td>
 								<select name="sampleType" class="selectpicker form-control">
+                                    <?php 
+                                    if(!empty($samples)){
+                        foreach($samples as $k=>$v){
+                            $selected='';
+                            if($getAreaDetails['sampleType']==$v->post_title){
+                                $selected="selected";
+                            }
+                            ?>
+                     <option <?php echo $selected; ?> value="<?php echo $v->post_title; ?>"><?php echo $v->post_title?></option>
+                    <?php
+                            
+                        }
+                    }
+                                    ?>
 									<?php
-                        if(!empty($selectArray)) {
+                       /* if(!empty($selectArray)) {
                             $selected='';
                             foreach($selectArray as $k=>$v){
                                 if(strtolower($v)==strtolower($getAreaDetails['sampleType'])) {
@@ -152,7 +170,7 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
 										</option>
 										<?php
                             }
-                        }
+                        } */
                         ?>
 								</select>
 							</td>
@@ -178,7 +196,8 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
 								<label for="exampleInputEmail1">Recommendation :</label>
 							</th>
 							<td>
-								<input type="text" value="<?php echo $getAreaDetails['recommendations'];?>" name="recommendations" class="form-control" placeholder="Recommendation">
+                                <textarea name="recommendations" class="form-control" ><?php echo $getAreaDetails['recommendations'];?></textarea>
+								<!--<input type="text" value="<?php //echo $getAreaDetails['recommendations'];?>" name="recommendations" class="form-control" placeholder="Recommendation">-->
 							</td>
 						</tr>
 						<tr>
@@ -280,9 +299,7 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
                             ?>
 									<div class="radio editPopup" data-final-value="<?php echo $v['id']; ?>" data-valu="<?php echo $v['name']; ?>">
 										<label>
-											<input <?php echo $checked; ?> type="checkbox" name="data[
-											<?php echo $v['id']; ?>][type]" value="
-											<?php echo $v['name']; ?>">
+											<input <?php echo $checked; ?> type="checkbox" name="data[<?php echo $v['id']; ?>][type]" value="<?php echo $v['name']; ?>">
 											<?php echo $v['name']; ?>
 										 </label>
 										<div class="form-group">
@@ -291,19 +308,19 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
 											 :</label>
 											<div class="radio ">
 												<label>
-													<input type="radio" <?php if($issueDetails[ 'typeValue']=='yes' ){ echo 'checked'; } ?> name="data[
-													<?php echo $v['id']; ?>][typeValue]" value="yes">Yes </label>
+													<input type="radio" <?php if($issueDetails[ 'typeValue']=='yes' ){ echo 'checked'; } ?> name="data[<?php echo $v['id']; ?>][typeValue]" value="yes">Yes </label>
 											</div>
 											<div class="radio ">
 												<label>
-													<input <?php if($issueDetails[ 'typeValue']=='no' ){ echo 'checked'; } ?> type="radio" name="data[
-													<?php echo $v['id']; ?>][typeValue]" value="no">No</label>
+													<input <?php if($issueDetails[ 'typeValue']=='no' ){ echo 'checked'; } ?> type="radio" name="data[<?php echo $v['id']; ?>][typeValue]" value="no">No</label>
 											</div>
 											<input type="hidden" name="data[<?php echo $v['id']; ?>][selectionId]" value="<?php echo $v['id']; ?>" />
 										</div>
 										<div class="form-group">
 											<label for="recipient-name" class="col-form-label">Observation/Recommendation/Measurements: :</label>
-											<input type="text" value="<?php echo $issueDetails['measurements'];?>" class="form-control" name="data[<?php echo $v['id']; ?>][measurements]">
+                  <textarea name="data[<?php echo $v['id']; ?>][measurements]" class="form-control" ><?php echo $issueDetails['measurements'];?></textarea>
+                                            
+											<!--<input type="text" value="<?php //echo $issueDetails['measurements'];?>" class="form-control" name="data[<?php //echo $v['id']; ?>][measurements]">-->
 										</div>
 										<div class="form-group">
 											<?php $locations=array(
@@ -327,10 +344,7 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
                                        $selectionLocation='selected'; 
                                     }
                                     ?>
-													<option <?php echo $selectionLocation; ?> value="
-														<?php echo $location; ?>">
-														<?php echo $location; ?>
-													</option>
+                                    <option <?php echo $selectionLocation; ?> value="<?php echo $location; ?>"><?php echo $location; ?></option>
 													<?php
                                 }
                             }
@@ -493,8 +507,7 @@ $getAreaDetails=$wpdb->get_row('select * from `im_areas` where `id`="'.$_GET['ar
                 }
                 ?>
 										<li>
-											<input <?php echo $check; ?> type="checkbox" class="form-control" name="mold_spores[]" value="
-											<?php echo $key; ?>"/>
+											<input <?php echo $check; ?> type="checkbox" class="form-control" name="mold_spores[]" value="<?php echo $key; ?>"/>
 											<?php echo $key; ?>
 										</li>
 										<?php

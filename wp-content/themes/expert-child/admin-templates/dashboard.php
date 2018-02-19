@@ -3,7 +3,8 @@ include('includes/header.php');
 $totalInspection= totalInspection();
 $approvedInspections= approvedInspections();
 $declinedInspections= declinedInspections();
-$pendingInspections= pendingInspections();
+$pendingInspections= pendingInspections();   
+$count=pastDaysDues();      
 ?>
 <div class="container">
 				<div class="boxContainer">
@@ -43,6 +44,15 @@ $pendingInspections= pendingInspections();
 							<h2>Pending Inspections</h2>
 							<div class="boxWrapper">
 	                            <span><?php echo count($pendingInspections); ?></span>
+							</div>
+						</div>
+                        </a>
+					</div><div class="box">
+                         <a href="<?php echo site_url().'/wp-admin/admin.php?page=inspection&inspectionType=pastdays';?>">
+						<div class="boxInner">
+							<h2>Past Days due</h2>
+							<div class="boxWrapper">
+	                            <span><?php echo count($count); ?></span>
 							</div>
 						</div>
                         </a>

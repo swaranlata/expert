@@ -7,6 +7,11 @@ if(empty($data['username'])){
 if(empty($data['password'])){
   response(0,array(),'Please enter the password.');   
 }
+if(!isset($data['offset']) || $data['offset']==''){
+  response(0,array(),'Please enter the offset.');   
+}
+$offset=$data['offset']*10;
+$limit=10;
 $scheduleList=getMyInspectionScheduleList($data);
 $orders=array();
 if(!empty($scheduleList)){
@@ -26,7 +31,7 @@ if(!empty($scheduleList)){
                 }
                 $list[$counter]['inspectionId']=$v['order']; 
                 $list[$counter]['clientName']=$name; 
-                $list[$counter]['inspectionType']=getInspectionTypeByOrdertype($data,$inspectionInfo['order']['ordertype']); 
+                $list[$counter]['inspectionType']=ucfirst(getInspectionTypeByOrdertype($data,$inspectionInfo['order']['ordertype'])); 
                 $list[$counter]['phoneNumber']=$mobile; 
                 $list[$counter]['address1']=$v['address1']; 
                 $list[$counter]['address2']=$v['address2']; 

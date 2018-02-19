@@ -17,7 +17,7 @@ if(!empty($getRecords)){
    $strCon=implode('","',$con);
 }
 if(!empty($strCon)){
-     $query='select * from `im_chats` where `conversationId` in ("'.$strCon.'") group by `conversationId`';
+    $query='select * from `im_chats` where `conversationId` in ("'.$strCon.'") group by `conversationId`';
     $chats=$wpdb->get_results($query,ARRAY_A);
 }else{
    $chats=array(); 
@@ -35,7 +35,7 @@ if(!empty($chats)){
         $allChats[$i]['userId']=$receiverId;
         $allChats[$i]['username']=get_user_meta($receiverId,'first_name',true);
         $allChats[$i]['conversationId']=$vv['conversationId'];
-         
+        $allChats[$i]['inspectionId']=getConversationIdByInspection($vv['conversationId']);
         $i++;    
     } 
    response(1,$allChats,'No Error Found.'); 

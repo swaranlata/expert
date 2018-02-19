@@ -16,15 +16,20 @@ $getAllClients=$wpdb->get_results('select * from `im_clients` where `inspectorId
 $allClient=array();
 if(!empty($getAllClients)){
     foreach($getAllClients as $k=>$v){
-        $allClient[]=$v; 
-        $allClient[$k]['clientId']=$v['id'];
+        $getInsDetails=getClientInspectionDetails($v['clientId']);
+        $allClient[$k]=$getInsDetails;
         $allClient[$k]['userId']=$v['inspectorId'];
-        $allClient[$k]['date']=date('d M,Y',strtotime($v['date']));
-        $allClient[$k]['inspectionDate']=date('d M,Y',strtotime($v['inspectionDate']));
-        $allClient[$k]['dateOfLoss']=date('d M,Y',strtotime($v['dateOfLoss']));
+        $allClient[$k]['date']=date('d M,Y',strtotime($getInsDetails['date']));
+        $allClient[$k]['inspectionDate']=date('d M,Y',strtotime($getInsDetails['inspectionDate']));
+        $allClient[$k]['dateOfLoss']=date('d M,Y',strtotime($getInsDetails['dateOfLoss']));  
+        $allClient[$k]['clientId']=$v['id'];
+        $allClient[$k]['fullName']=$v['fullName'];
+        $allClient[$k]['location']=$v['location'];
+        $allClient[$k]['phoneNumber']=$v['phoneNumber'];
+        $allClient[$k]['email']=$v['email'];
+        $allClient[$k]['clientId']=$v['id'];
         unset($allClient[$k]['id']);
-        unset($allClient[$k]['created']);
-        unset($allClient[$k]['inspectorId']);
+        unset($getInsDetails['id']);
     }
     response(1,$allClient,'No Error Found.'); 
 }else{

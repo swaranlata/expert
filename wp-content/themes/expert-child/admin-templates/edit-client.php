@@ -2,15 +2,35 @@
 include 'includes/header.php';
 global $wpdb;
 $msg='';
+$getClientDetails=$wpdb->get_row('select * from `im_clients` where `id`="'.$_GET['clientId'].'"',ARRAY_A);
+$clientInspectionDetails=getClientInspectionDetails($getClientDetails['clientId']);
 if(isset($_POST['editClientDetails'])){
-    $wpdb->query('update `im_clients` set `fullName`="'.$_POST['fullName'].'",`location`="'.$_POST['location'].'",`phoneNumber`="'.$_POST['phoneNumber'].'",`email`="'.$_POST['email'].'",`jobNumber`="'.$_POST['jobNumber'].'",`date`="'.$_POST['date'].'",`time`="'.$_POST['time'].'",`rehabbedAfterYear`="'.$_POST['rehabbedAfterYear'].'",`inspectionType`="'.$_POST['inspectionType'].'",`paymentType`="'.$_POST['paymentType'].'",`inspectionDate`="'.$_POST['inspectionDate'].'",`inspectionTime`="'.$_POST['inspectionTime'].'",`isnNotes`="'.$_POST['isnNotes'].'",`insuaranceCompany`="'.$_POST['insuaranceCompany'].'",`policyNumber`="'.$_POST['policyNumber'].'",`claim`="'.$_POST['claim'].'",`insuaranceAdjuster`="'.$_POST['insuaranceAdjuster'].'",`claimCount`="'.$_POST['claimCount'].'",`dateOfLoss`="'.$_POST['dateOfLoss'].'",`typeOfLoss`="'.$_POST['typeOfLoss'].'",`remedeationCompany`="'.$_POST['remedeationCompany'].'",`publicAdjuster`="'.$_POST['publicAdjuster'].'",`referralSource`="'.$_POST['referralSource'].'" where `id`="'.$_GET['clientId'].'"');
+    $date='';
+    if(!empty($_POST['date'])){
+        $_POST['date']=str_replace('/','-',$_POST['date']);
+        $date=date('Y-m-d',strtotime($_POST['date']));  
+    }
+    $dateOfLoss='';
+    if(!empty($_POST['dateOfLoss'])){
+        $_POST['dateOfLoss']=str_replace('/','-',$_POST['dateOfLoss']);
+       $dateOfLoss=date('Y-m-d h:i:a',strtotime($_POST['dateOfLoss']));  
+    }
+    $inspectionDate='';
+    if(!empty($_POST['inspectionDate'])){
+         $_POST['inspectionDate']=str_replace('/','-',$_POST['inspectionDate']);
+         $inspectionDate=date('Y-m-d h:i:a',strtotime($_POST['inspectionDate']));  
+    }
+    
+    $wpdb->query('update `im_clients` set  `fullName`="'.$_POST['fullName'].'",`location`="'.$_POST['location'].'",`phoneNumber`="'.$_POST['phoneNumber'].'",`email`="'.$_POST['email'].'" where `id`="'.$_GET['clientId'].'"');
+    
+    $wpdb->query('update `im_new_inspections` set `jobNumber`="'.$_POST['jobNumber'].'",`date`="'.$date.'",`time`="'.$_POST['time'].'",`rehabbedAfterYear`="'.$_POST['rehabbedAfterYear'].'",`inspectionType`="'.$_POST['inspectionType'].'",`paymentType`="'.$_POST['paymentType'].'",`inspectionDate`="'.$inspectionDate.'",`inspectionTime`="'.$_POST['inspectionTime'].'",`isnNotes`="'.$_POST['isnNotes'].'",`insuaranceCompany`="'.$_POST['insuaranceCompany'].'",`policyNumber`="'.$_POST['policyNumber'].'",`claim`="'.$_POST['claim'].'",`insuaranceAdjuster`="'.$_POST['insuaranceAdjuster'].'",`claimCount`="'.$_POST['claimCount'].'",`dateOfLoss`="'.$dateOfLoss.'",`typeOfLoss`="'.$_POST['typeOfLoss'].'",`remedeationCompany`="'.$_POST['remedeationCompany'].'",`publicAdjuster`="'.$_POST['publicAdjuster'].'",`referralSource`="'.$_POST['referralSource'].'" where `id`="'.$clientInspectionDetails['id'].'"');
     $msg='1';
 }
 $getClientDetails=$wpdb->get_row('select * from `im_clients` where `id`="'.$_GET['clientId'].'"',ARRAY_A);
-
+$clientInspectionDetails=getClientInspectionDetails($getClientDetails['clientId']);
 ?>
 <div class="wrap">
-  <h1>Edit Inspection</h1>
+  <h1>Edit Client</h1>
     <?php
     if(!empty($msg)){
         ?>
@@ -41,83 +61,87 @@ $getClientDetails=$wpdb->get_row('select * from `im_clients` where `id`="'.$_GET
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Job Number</label></th>
-            <td><input type="text" name="jobNumber" value="<?php echo $getClientDetails['jobNumber']; ?>" class="form-control" placeholder="Job Number"></td>
+            <td><input type="text" name="jobNumber" value="<?php echo $clientInspectionDetails['jobNumber']; ?>" class="form-control" placeholder="Job Number"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Date</label></th>
-            <td><input type="text" id="date" name="date" value="<?php echo date('d/m/Y',strtotime($getClientDetails['date'])); ?>" class="form-control" placeholder="Date"></td>
+            <td><input type="text" id="date" name="date" value="<?php echo date('d/m/Y',strtotime($clientInspectionDetails['date'])); ?>" class="form-control" placeholder="Date"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Time</label></th>
-            <td><input type="text" name="time" value="<?php echo $getClientDetails['time']; ?>" class="form-control timepickerclass" placeholder="Time"></td>
+            <td><input type="text" name="time" value="<?php echo $clientInspectionDetails['time']; ?>" class="form-control timepickerclass" placeholder="Time"></td>
         </tr>
        <tr>
             <th scope="row">
                 <label for="exampleInputEmail1">Rehabbed after years</label></th>
             <td>
-                <input type="radio" <?php if(trim($getClientDetails['rehabbedAfterYear'])=='yes'){
+                <input type="radio" <?php if(trim($clientInspectionDetails['rehabbedAfterYear'])=='yes'){
     echo 'checked="checked"';
 } ?> name="rehabbedAfterYear" value="yes"/>Yes
-                <input <?php if(trim($getClientDetails['rehabbedAfterYear'])=='no'){
+                <input <?php if(trim($clientInspectionDetails['rehabbedAfterYear'])=='no'){
     echo 'checked="checked"';
 } ?> type="radio" name="rehabbedAfterYear" value="no"/>No
            </td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Inspection Type</label></th>
-            <td><input type="text" name="inspectionType" value="<?php echo $getClientDetails['inspectionType']; ?>" class="form-control" placeholder="Inspection Type"></td>
+            <td><input type="text" name="inspectionType" value="<?php echo $clientInspectionDetails['inspectionType']; ?>" class="form-control" placeholder="Inspection Type"></td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="exampleInputEmail1">Payment Type</label></th>
+            <td><input type="text" name="paymentType" value="<?php echo $clientInspectionDetails['paymentType']; ?>" class="form-control" placeholder="Payment Type"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Inspection Date</label></th>
-            <td><input type="text" name="inspectionDate" value="<?php echo date('d/m/Y',strtotime($getClientDetails['inspectionDate'])); ?>" id="inspectionDate" class="form-control" placeholder="Inspection Date"></td>
+            <td><input type="text" name="inspectionDate" value="<?php echo date('d/m/Y',strtotime($clientInspectionDetails['inspectionDate'])); ?>" id="inspectionDate" class="form-control" placeholder="Inspection Date"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Inspection Time</label></th>
-            <td><input type="text" name="inspectionTime" value="<?php echo $getClientDetails['inspectionTime']; ?>" class="form-control timepickerclass" placeholder="Inspection Time"></td>
+            <td><input type="text" name="inspectionTime" value="<?php echo $clientInspectionDetails['inspectionTime']; ?>" class="form-control timepickerclass" placeholder="Inspection Time"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Isn Notes</label></th>
-            <td><input type="text" name="isnNotes" value="<?php echo $getClientDetails['isnNotes']; ?>" class="form-control" placeholder="Isn Notes"></td>
+            <td><input type="text" name="isnNotes" value="<?php echo $clientInspectionDetails['isnNotes']; ?>" class="form-control" placeholder="Isn Notes"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Insuarance Company</label></th>
-            <td><input type="text" name="insuaranceCompany" value="<?php echo $getClientDetails['insuaranceCompany']; ?>" class="form-control" placeholder="Insuarance Company"></td>
+            <td><input type="text" name="insuaranceCompany" value="<?php echo $clientInspectionDetails['insuaranceCompany']; ?>" class="form-control" placeholder="Insuarance Company"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Policy Number</label></th>
-            <td><input type="text" name="policyNumber" value="<?php echo $getClientDetails['policyNumber']; ?>" class="form-control" placeholder="Policy Number"></td>
+            <td><input type="text" name="policyNumber" value="<?php echo $clientInspectionDetails['policyNumber']; ?>" class="form-control" placeholder="Policy Number"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Claim</label></th>
-            <td><input type="text" name="claim" value="<?php echo $getClientDetails['claim']; ?>" class="form-control" placeholder="Claim"></td>
+            <td><input type="text" name="claim" value="<?php echo $clientInspectionDetails['claim']; ?>" class="form-control" placeholder="Claim"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Insuarance Adjuster</label></th>
-            <td><input type="text" name="insuaranceAdjuster" value="<?php echo $getClientDetails['insuaranceAdjuster']; ?>" class="form-control" placeholder="Insuarance Adjuster"></td>
+            <td><input type="text" name="insuaranceAdjuster" value="<?php echo $clientInspectionDetails['insuaranceAdjuster']; ?>" class="form-control" placeholder="Insuarance Adjuster"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Claim Count</label></th>
-            <td><input type="text" name="claimCount" value="<?php echo $getClientDetails['claimCount']; ?>" class="form-control" placeholder="Claim Count"></td>
+            <td><input type="text" name="claimCount" value="<?php echo $clientInspectionDetails['claimCount']; ?>" class="form-control" placeholder="Claim Count"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Date Of Loss</label></th>
-            <td><input type="text" id="dateOfLoss" name="dateOfLoss" value="<?php echo date('d/m/Y',strtotime($getClientDetails['dateOfLoss'])); ?>" class="form-control" placeholder="Date Of Loss"></td>
+            <td><input type="text" id="dateOfLoss" name="dateOfLoss" value="<?php echo date('d/m/Y',strtotime($clientInspectionDetails['dateOfLoss'])); ?>" class="form-control" placeholder="Date Of Loss"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Type Of Loss</label></th>
-            <td><input type="text" name="typeOfLoss" value="<?php echo $getClientDetails['typeOfLoss']; ?>" class="form-control" placeholder="Type Of Loss"></td>
+            <td><input type="text" name="typeOfLoss" value="<?php echo $clientInspectionDetails['typeOfLoss']; ?>" class="form-control" placeholder="Type Of Loss"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Remedeation Company</label></th>
-            <td><input type="text" name="remedeationCompany" value="<?php echo $getClientDetails['remedeationCompany']; ?>" class="form-control" placeholder="Remedeation Company"></td>
+            <td><input type="text" name="remedeationCompany" value="<?php echo $clientInspectionDetails['remedeationCompany']; ?>" class="form-control" placeholder="Remedeation Company"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Public Adjuster</label></th>
-            <td><input type="text" name="publicAdjuster" value="<?php echo $getClientDetails['publicAdjuster']; ?>" class="form-control" placeholder="Public Adjuster"></td>
+            <td><input type="text" name="publicAdjuster" value="<?php echo $clientInspectionDetails['publicAdjuster']; ?>" class="form-control" placeholder="Public Adjuster"></td>
         </tr>
        <tr>
             <th scope="row"><label for="exampleInputEmail1">Referral Source</label></th>
-            <td><input type="text" name="referralSource" value="<?php echo $getClientDetails['referralSource']; ?>" class="form-control" placeholder="Referral Source"></td>
+            <td><input type="text" name="referralSource" value="<?php echo $clientInspectionDetails['referralSource']; ?>" class="form-control" placeholder="Referral Source"></td>
         </tr>
        
      

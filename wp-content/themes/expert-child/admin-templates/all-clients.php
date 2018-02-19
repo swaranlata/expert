@@ -42,15 +42,17 @@ $getAllClients=$wpdb->get_results('select * from `im_clients` order by id desc',
 					$counter=1;
 					if(!empty($getAllClients)) {
 						foreach($getAllClients as $k=>$v) {
+                           $clientInspectionDetails=getClientInspectionDetails($v['clientId']);
+                            
                            ?>
 							<tr>
                                 <td><?php echo $counter; ?></td>
                                 <td><?php echo $v['fullName']; ?></td>
                                 <td><?php echo $v['phoneNumber']; ?></td>
                                 <td><?php echo $v['email']; ?></td>
-                                <td><?php echo $v['inspectionType']; ?></td>
-                                <td><?php echo $v['paymentType']; ?></td>
-                                <td><?php echo $v['inspectionDate'].' '.$v['inspectionTime']; ?></td>
+                                <td><?php echo $clientInspectionDetails['inspectionType']; ?></td>
+                                <td><?php echo $clientInspectionDetails['paymentType']; ?></td>
+                                <td><?php echo date('d M,Y',strtotime($clientInspectionDetails['inspectionDate'])).'  '.$clientInspectionDetails['inspectionTime']; ?></td>
                                 <td><a  class="button button-secondary"  href="<?php echo admin_url().'admin.php?page=edit-client&clientId='.$v['id']; ?>"><i class="fa fa-edit"></i></a>
                                     <a class="button button-secondary" href="<?php echo admin_url().'admin.php?page=view-client&clientId='.$v['id']; ?>"><i class="fa fa-eye"></i></a>
                                     <a  class="button button-secondary"  onclick="return confirm('Are you sure to delete the client.?')" href="<?php echo admin_url().'admin.php?page=delete-client&clientId='.$v['id']; ?>"><i class="fa fa-remove"></i></a></td>

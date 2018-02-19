@@ -34,7 +34,17 @@ define('CUSTOM_ADMIN_URL',admin_url());
     function getSampleType(){
         $posts = get_posts(
                     array(
-                       'post_type' => 'sampletypes'
+                       'post_type' => 'sampletypes',
+                        'posts_per_page' => -1
+                    )
+                );
+        return $posts;
+    }
+    function getAllInspectionTypes(){
+        $posts = get_posts(
+                    array(   
+                       'post_type' => 'inspectiontypes',
+                        'posts_per_page' => -1
                     )
                 );
         return $posts;
@@ -111,8 +121,8 @@ define('CUSTOM_ADMIN_URL',admin_url());
        return $response=convert_array($response);
     }
     function getInspectionType($orderType=null,$data=null){
-        $data=array('username'=>'swaran','password'=>'admin@123');
-        return getInspectionTypeByOrdertype($data=null,$ordertype=null);
+        $data=getOwnerDetails();
+        return getInspectionTypeByOrdertype($data,$ordertype);
     }
 
     function getUserInformation($data=null){
@@ -181,8 +191,37 @@ define('CUSTOM_ADMIN_URL',admin_url());
         }
         return $array;
     }
-    /* Get Inspection Type by order type*/
+
     function getInspectionTypeByOrdertype($data=null,$ordertype=null){
+        $url= ISN_API.'ordertypes?username='.$data['username'].'&password='.$data['password'];
+        $results=getContentFromUrl($url);
+        $inspectionName='';
+        if(!empty($results['ordertypes'])){
+            foreach($results['ordertypes'] as $k=>$v){
+
+               if($v['id']==$ordertype){
+                $inspectionName=str_replace(PHP_EOL, '', $v['name']);
+                $inspectionName = preg_replace("/[\n\r]/","",$inspectionName); 
+              }  
+            }
+        }
+        $inspectionName=str_replace(' ','-',strtolower($inspectionName));
+        $test=json_decode(file_get_contents(site_url().'/api/getAllInspectionTypes.php?userId=9'),true);
+        if(!empty($test['result'])){
+          foreach($test['result'] as $ka=>$va){
+            $va['name']=str_replace(' ','-',strtolower($va['name']));
+            if(strtolower($inspectionName)==strtolower($va['name'])){
+                return ucfirst($va['type']);
+                break;
+            }
+          }  
+        }   
+       return false;
+    }
+
+
+    /* Get Inspection Type by order type*/
+    function getInspectionTypeByOrdertypeBkup($data=null,$ordertype=null){
         $url= ISN_API.'ordertypes?username='.$data['username'].'&password='.$data['password'];
         $results=getContentFromUrl($url);
         $inspectionName='';
@@ -197,7 +236,7 @@ define('CUSTOM_ADMIN_URL',admin_url());
         $inspectionName=str_replace(' ','-',strtolower($inspectionName));
         $post=get_page_by_path( 'the_slug', $inspectionName, 'inspectiontypes');
         $id = $post->ID;
-        $category_detail=get_terms($id);//$post->ID
+        $category_detail=get_the_terms($id,'inspectiontypes');
         $catName='';
         if(!empty($category_detail)){
            foreach($category_detail as $cd){
@@ -205,6 +244,23 @@ define('CUSTOM_ADMIN_URL',admin_url());
             } 
         }
         return $catName;
+    } /* Get Inspection Type by order type*/
+    function getInspectionTypeByOrdertypeName($inspectionType=null){
+        $getOwnerDetails=getOwnerDetails();
+        $url= ISN_API.'ordertypes?username='.$getOwnerDetails['username'].'&password='.$getOwnerDetails['password'];
+        $results=getContentFromUrl($url);
+        $inspectionName='';
+        $inspectionId='';
+        if(!empty($results['ordertypes'])){
+            foreach($results['ordertypes'] as $k=>$v){
+              $inspectionName=str_replace(PHP_EOL, '', $v['name']);
+              $inspectionName = preg_replace("/[\n\r]/","",$inspectionName); 
+              if(strtolower(trim($inspectionName))==strtolower(trim($inspectionType))){
+                $inspectionId=$v['id'];                
+              }  
+            }
+        } 
+        return $inspectionId;
     }
 
     /* Get My Inspection Schedule list */
@@ -232,35 +288,48 @@ define('CUSTOM_ADMIN_URL',admin_url());
         if(!empty($getRow)){
           response(0,null,'Inspection already started.');
         }
-        $wpdb->query('insert into `im_inspection_details`(`inspectionId`,`enviornmentType`,`hvacSystemValue`,`outdoorTemprature`,`hvacSystem`,`bullets`,`ductwork`,`outdoorRh`,`hvacSystemVisual`,`inspectionDate`,`inspectionTime`) values("'.$data['inspectionId'].'","'.$data['enviornmentType'].'","'.$data['hvacSystemValue'].'","'.$data['outdoorTemprature'].'","'.$data['hvacSystem'].'","'.$data['bullets'].'","'.$data['ductwork'].'","'.$data['outdoorRh'].'","'.$data['hvacSystemVisual'].'","'.$data['inspectionDate'].'","'.$data['inspectionTime'].'")');
+        /*$dateOfLoss=$data['dateOfLoss'];
+        if(!empty($dateOfLoss)){
+          $dateOfLoss=date('Y-m-d h:i:s',strtotime($data['dateOfLoss']));
+        } */ 
+        $inspectionDate=$data['inspectionDate'];
+        if(!empty($inspectionDate)){
+          $inspectionDate=date('Y-m-d h:i:s',strtotime($data['inspectionDate']));
+          $finalInspectionDate=date('Y-m-d',strtotime($data['inspectionDate']));          
+        }
+        $wpdb->query('insert into `im_inspection_details`(`inspectionId`,`enviornmentType`,`hvacSystemValue`,`outdoorTemprature`,`hvacSystem`,`bullets`,`ductwork`,`outdoorRh`,`hvacSystemVisual`,`inspectionDate`,`inspectionTime`) values("'.$data['inspectionId'].'","'.$data['enviornmentType'].'","'.$data['hvacSystemValue'].'","'.$data['outdoorTemprature'].'","'.$data['hvacSystem'].'","'.$data['bullets'].'","'.$data['ductwork'].'","'.$data['outdoorRh'].'","'.$data['hvacSystemVisual'].'","'.$finalInspectionDate.'","'.$data['inspectionTime'].'")');
         $lastid = $wpdb->insert_id;
         if(!empty($data['images'])){
             foreach($data['images'] as $imgKey=>$imgVal){
-                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastid.'","'.$imgVal['key'].'","0","3")');
+                if(!empty($imgVal['key'])){
+                  $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastid.'","'.$imgVal['key'].'","0","3")');  
+                }                
             }
         }
         $getInspectionImages=getInspectionImages($lastid,'image');
         $allInspectionImages=array();
         if(!empty($getInspectionImages)){
           foreach($getInspectionImages as $k=>$v){
-             $allInspectionImages['imageId']=$v['id'];  
-             $allInspectionImages['key']=$v['imgKey'];  
-             $allInspectionImages['imageUrl']=$v['images'];  
+             $allInspectionImages[$k]['imageId']=$v['id'];  
+             $allInspectionImages[$k]['key']=$v['imageKey'];  
+             $allInspectionImages[$k]['imageUrl']=$v['images'];  
           }  
         }
         $data['images']=$allInspectionImages;        
         if(!empty($data['diagram'])){
             foreach($data['diagram'] as $imgKey=>$imgVal){
-                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastid.'","'.$imgVal['key'].'","1","3")');
+                if(!empty($imgVal['key'])){
+                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastid.'","'.$imgVal['key'].'","1","3")');
+                }
             }
         }
         $getInspectionDiagram=getInspectionImages($lastid,'diagram');
         $allInspectionDiagramImages=array();
         if(!empty($getInspectionDiagram)){
           foreach($getInspectionDiagram as $k=>$v){
-             $allInspectionDiagramImages['imageId']=$v['id'];  
-             $allInspectionDiagramImages['key']=$v['imgKey'];  
-             $allInspectionDiagramImages['imageUrl']=$v['images'];  
+             $allInspectionDiagramImages[$k]['imageId']=$v['id'];  
+             $allInspectionDiagramImages[$k]['key']=$v['imageKey'];  
+             $allInspectionDiagramImages[$k]['imageUrl']=$v['images'];  
           }  
         }
         $wpdb->query('insert into `im_inspection_assignments`(`inspectionId`,`inspectorId`) values("'.$lastid.'","'.$data['userId'].'")'); 
@@ -271,7 +340,9 @@ define('CUSTOM_ADMIN_URL',admin_url());
                 $data['areaDetails'][$k]['areaId']=$lastAreaid;
                 if(!empty($data['areaDetails'][$k]['images'])){
                     foreach($data['areaDetails'][$k]['images'] as $imgKey=>$imgVal){
-                        $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastAreaid.'","'.$imgVal['key'].'","0","0")');
+                         if(!empty($imgVal['key'])){
+                         $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastAreaid.'","'.$imgVal['key'].'","0","0")');
+                         }
                     }
                 }
                 $getAreaImages=getAreaImages($lastid,'image');
@@ -306,7 +377,9 @@ define('CUSTOM_ADMIN_URL',admin_url());
                         $data['areaDetails'][$k]['issueType'][$keys]['issueId']=$lastIssueId;
                         if(!empty($values['images'])){
                             foreach($values['images'] as $imgKey=>$imgVal){
-                                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastIssueId.'","'.$imgVal['key'].'","0","1")');
+                                 if(!empty($imgVal['key'])){
+                                     $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastIssueId.'","'.$imgVal['key'].'","0","1")');
+                                 }
                             }
                         }
                         $getIssueImages=getIssueImages($lastIssueId,'image');
@@ -321,7 +394,9 @@ define('CUSTOM_ADMIN_URL',admin_url());
                         $data['areaDetails'][$k]['issueType'][$keys]['images']=$allIssueImages;
                         if(!empty($values['diagram'])){
                             foreach($values['diagram'] as $imgKey=>$imgVal){
-                                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastIssueId.'","'.$imgVal['key'].'","1","1")');
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastIssueId.'","'.$imgVal['key'].'","1","1")');
+                                }
                             }
                         }
                         $getIssueDiaImages=getIssueImages($lastIssueId,'diagram');
@@ -343,7 +418,9 @@ define('CUSTOM_ADMIN_URL',admin_url());
                         $data['areaDetails'][$k]['additionalSample'][$keysT]['sampleId']=$lastSampleId;
                         if(!empty($valuesT['images'])){
                             foreach($valuesT['images'] as $imgKey=>$imgVal){
-                                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastSampleId.'","'.$imgVal['key'].'","0","2")');
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastSampleId.'","'.$imgVal['key'].'","0","2")');
+                                }
                             }
                         }
                         $getSampleImages=getSampleImages($lastSampleId,'image');
@@ -358,7 +435,9 @@ define('CUSTOM_ADMIN_URL',admin_url());
                         $data['areaDetails'][$k]['additionalSample'][$keysT]['images']=$allSampleImg;
                         if(!empty($valuesT['diagram'])){
                             foreach($valuesT['diagram'] as $imgKey=>$imgVal){
-                                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastSampleId.'","'.$imgVal['key'].'","1","2")');
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastSampleId.'","'.$imgVal['key'].'","1","2")');
+                                }
                             }
                         }
                         $getSampleDiaImages=getSampleImages($lastSampleId,'diagram');
@@ -378,6 +457,192 @@ define('CUSTOM_ADMIN_URL',admin_url());
         $data['localInspectionId']=(string) $lastid;
         return $data;
     }
+
+    function updateInspectionDetails($data=null){
+        global $wpdb;
+        $getRow=$wpdb->get_row('select * from `im_inspection_details` where `id`="'.$data['inspectionId'].'"',ARRAY_A);
+        if(empty($getRow)){
+          response(0,null,'No Inspection found to update.');
+        }
+        $inspectionDate=$data['inspectionDate'];
+        if(!empty($inspectionDate)){
+          $inspectionDate=date('Y-m-d h:i:s',strtotime($data['inspectionDate']));
+          $finalInspectionDate=date('Y-m-d',strtotime($data['inspectionDate']));          
+        }        
+        $wpdb->query('update `im_inspection_details` set `enviornmentType`="'.$data['enviornmentType'].'",`hvacSystemValue`="'.$data['hvacSystemValue'].'",`outdoorTemprature`="'.$data['outdoorTemprature'].'",`hvacSystem`="'.$data['hvacSystem'].'",`bullets`="'.$data['bullets'].'",`ductwork`="'.$data['ductwork'].'",`outdoorRh`="'.$data['outdoorRh'].'",`hvacSystemVisual`="'.$data['hvacSystemVisual'].'",`inspectionDate`="'.$finalInspectionDate.'",`inspectionTime`="'.$data['inspectionTime'].'" where `id`="'.$getRow['id'].'"');
+        $lastid = $getRow['id'];
+        if(!empty($data['images'])){
+            foreach($data['images'] as $imgKey=>$imgVal){
+                if(!empty($imgVal['key'])){
+                $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastid.'","'.$imgVal['key'].'","0","3")');
+                }
+            }
+        }
+        $getInspectionImages=getInspectionImages($lastid,'image');
+        $allInspectionImages=array();
+        if(!empty($getInspectionImages)){
+          foreach($getInspectionImages as $k=>$v){
+             $allInspectionImages[$k]['imageId']=$v['id'];  
+             $allInspectionImages[$k]['key']=$v['imageKey'];  
+             $allInspectionImages[$k]['imageUrl']=$v['images'];  
+          }  
+        }
+        $data['images']=$allInspectionImages;        
+        if(!empty($data['diagram'])){
+            foreach($data['diagram'] as $imgKey=>$imgVal){
+                if(!empty($imgVal['key'])){
+                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastid.'","'.$imgVal['key'].'","1","3")');
+                }
+            }
+        }
+        $getInspectionDiagram=getInspectionImages($lastid,'diagram');
+        $allInspectionDiagramImages=array();
+        if(!empty($getInspectionDiagram)){
+          foreach($getInspectionDiagram as $k=>$v){
+             $allInspectionDiagramImages[$k]['imageId']=$v['id'];  
+             $allInspectionDiagramImages[$k]['key']=$v['imageKey'];  
+             $allInspectionDiagramImages[$k]['imageUrl']=$v['images'];  
+          }  
+        }
+        if(!empty($data['areaDetails'])){
+            foreach($data['areaDetails'] as $k=>$v){
+                if(!empty($v['areaId'])){
+                   $wpdb->query('update  `im_areas` set `areaName`="'.$v['areaName'].'", `visualObservation`="'.$v['visualObservation'].'", `sampleType`="'.$v['sampleType'].'",`serial`="'.$v['serial'].'", `generalObservation`="'.$v['generalObservation'].'",`recommendations`="'.$v['recommendations'].'",`temprature`="'.$v['temprature'].'",`rhRelativeHumidity`="'.$v['rhRelativeHumidity'].'" where `id="'.$v['areaId'].'"');
+                  $lastAreaid = $v['areaId'];  
+                }else{
+                   $wpdb->query('insert into `im_areas`(`inspectionId`,`areaName`,`visualObservation`,`sampleType`,`serial`,`generalObservation`,`recommendations`,`temprature`,`rhRelativeHumidity`) values("'.$lastid.'","'.$v['areaName'].'","'.$v['visualObservation'].'","'.$v['sampleType'].'","'.$v['serial'].'","'.$v['generalObservation'].'","'.$v['recommendations'].'","'.$v['temprature'].'","'.$v['rhRelativeHumidity'].'")');
+                   $lastAreaid = $wpdb->insert_id;
+                    
+                }
+                $data['areaDetails'][$k]['areaId']=$lastAreaid;
+                if(!empty($data['areaDetails'][$k]['images'])){
+                    foreach($data['areaDetails'][$k]['images'] as $imgKey=>$imgVal){
+                        if(!empty($imgVal['key'])){
+                            $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastAreaid.'","'.$imgVal['key'].'","0","0")');
+                        }
+                    }
+                }
+                $getAreaImages=getAreaImages($lastid,'image');
+                $allAreaImages=array();
+                if(!empty($getAreaImages)){
+                    foreach($getAreaImages as $imgK=>$valK){
+                        $allAreaImages[$imgK]['imageId']=$valK['id'];
+                        $allAreaImages[$imgK]['key']=$valK['imageKey'];
+                        $allAreaImages[$imgK]['imageUrl']=$valK['images'];
+                    }
+                }
+                $data['areaDetails'][$k]['images']=$allAreaImages;
+                if(!empty($data['areaDetails'][$k]['diagram'])){
+                    foreach($data['areaDetails'][$k]['diagram'] as $imgKey=>$imgVal){
+                        if(!empty($imgVal['key'])){
+                            $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastAreaid.'","'.$imgVal['key'].'","1","0")');
+                        }
+                    }
+                }
+                $getDiagramImages=getAreaImages($lastid,'diagram');
+                $allAreaDiaImages=array();
+                if(!empty($getDiagramImages)){
+                    foreach($getDiagramImages as $imgK=>$valK){
+                        $allAreaDiaImages[$imgK]['diagramId']=$valK['id'];
+                        $allAreaDiaImages[$imgK]['key']=$valK['imageKey'];
+                        $allAreaDiaImages[$imgK]['diagram']=$valK['images'];
+                    }
+                }
+                $data['areaDetails'][$k]['diagram']=$allAreaDiaImages;
+                if(!empty($v['issueType'])){
+                    $wpdb->query('delete from `im_issues` where `areaId`="'.$lastAreaid.'"');
+                    foreach($v['issueType'] as $keys=>$values){
+                        $wpdb->query('insert into `im_issues`(`type`,`selectionId`,`areaId`,`typeValue`,`measurements`,`location`) values("'.$values['type'].'","'.$values['typeId'].'","'.$lastAreaid.'","'.$values['typeValue'].'","'.$values['measurements'].'","'.$values['location'].'")');
+                        $lastIssueId = $wpdb->insert_id;
+                        $data['areaDetails'][$k]['issueType'][$keys]['issueId']=$lastIssueId;
+                        if(!empty($values['images'])){
+                            foreach($values['images'] as $imgKey=>$imgVal){
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastIssueId.'","'.$imgVal['key'].'","0","1")');
+                                }
+                            }
+                        }
+                        $getIssueImages=getIssueImages($lastIssueId,'image');
+                        $allIssueImg=array();
+                        if(!empty($getIssueImages)){
+                            foreach($getIssueImages as $imgK=>$valK){
+                                $allIssueImages[$imgK]['imageId']=$valK['id'];
+                                $allIssueImages[$imgK]['key']=$valK['imageKey'];
+                                $allIssueImages[$imgK]['imageUrl']=$valK['images'];
+                            }
+                        }
+                        $data['areaDetails'][$k]['issueType'][$keys]['images']=$allIssueImages;
+                        if(!empty($values['diagram'])){
+                            foreach($values['diagram'] as $imgKey=>$imgVal){
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastIssueId.'","'.$imgVal['key'].'","1","1")');
+                                }
+                            }
+                        }
+                        $getIssueDiaImages=getIssueImages($lastIssueId,'diagram');
+                        $allIssueDImg=array();
+                        if(!empty($getIssueDiaImages)){
+                            foreach($getIssueDiaImages as $imgK=>$valK){
+                                $allIssueDImg[$imgK]['diagramId']=$valK['id'];
+                                $allIssueDImg[$imgK]['key']=$valK['imageKey'];
+                                $allIssueDImg[$imgK]['diagram']=$valK['images'];
+                            }
+                        }
+                        $data['areaDetails'][$k]['issueType'][$keys]['diagram']=$allIssueDImg;
+                    }
+                }
+                if(!empty($v['additionalSample'])){
+                    foreach($v['additionalSample'] as $keysT=>$valuesT){
+                        if(!empty($valuesT['sampleId'])){
+                           $wpdb->query('update `im_samples` set `sampleType`="'.$valuesT['sampleType'].'",`sampleSerialNo`="'.$valuesT['sampleSerialNo'].'",`sampleObservation`="'.$valuesT['sampleObservation'].'" where `id`="'.$valuesT['sampleId'].'"');
+                           $lastSampleId =$valuesT['sampleId']; 
+                        }else{
+                           $wpdb->query('insert into `im_samples`(`sampleType`,`sampleSerialNo`,`sampleObservation`,`areaId`) values("'.$valuesT['sampleType'].'","'.$valuesT['sampleSerialNo'].'","'.$valuesT['sampleObservation'].'","'.$lastAreaid.'")');
+                           $lastSampleId = $wpdb->insert_id; 
+                        }
+                        $data['areaDetails'][$k]['additionalSample'][$keysT]['sampleId']=$lastSampleId;
+                        if(!empty($valuesT['images'])){
+                            foreach($valuesT['images'] as $imgKey=>$imgVal){
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastSampleId.'","'.$imgVal['key'].'","0","2")');
+                                }
+                            }
+                        }
+                        $getSampleImages=getSampleImages($lastSampleId,'image');
+                        $allSampleImg=array();
+                        if(!empty($getSampleImages)){
+                            foreach($getSampleImages as $imgK=>$valK){
+                                $allSampleImg[$imgK]['imageId']=$valK['id'];
+                                $allSampleImg[$imgK]['key']=$valK['imageKey'];
+                                $allSampleImg[$imgK]['imageUrl']=$valK['images'];
+                            }
+                        }
+                        $data['areaDetails'][$k]['additionalSample'][$keysT]['images']=$allSampleImg;
+                        if(!empty($valuesT['diagram'])){
+                            foreach($valuesT['diagram'] as $imgKey=>$imgVal){
+                                if(!empty($imgVal['key'])){
+                                    $wpdb->query('insert into `im_images`(`areaId`,`imageKey`,`imageType`,`type`) values("'.$lastSampleId.'","'.$imgVal['key'].'","1","2")');
+                                }
+                            }
+                        }
+                        $getSampleDiaImages=getSampleImages($lastSampleId,'diagram');
+                        $allSampleDiaImg=array();
+                        if(!empty($getSampleDiaImages)){
+                            foreach($getSampleDiaImages as $imgK=>$valK){
+                                $allSampleDiaImg[$imgK]['diagramId']=$valK['id'];
+                                $allSampleDiaImg[$imgK]['key']=$valK['imageKey'];
+                                $allSampleDiaImg[$imgK]['diagram']=$valK['images'];
+                            }
+                        }
+                        $data['areaDetails'][$k]['additionalSample'][$keysT]['diagram']=$allSampleDiaImg;
+                    }
+                }
+            }            
+        }
+        $data['localInspectionId']=(string) $lastid;
+        return $data;
+    }
+
     function saveInspectionDetailsBKUP($data=null){
         global $wpdb;
         $getRow=$wpdb->get_row('select * from `im_inspection_details` where `inspectionId`="'.$data['inspectionId'].'"');
@@ -527,6 +792,7 @@ define('CUSTOM_ADMIN_URL',admin_url());
         if($user_roles!='administrator'){
             add_menu_page('inbox', 'Inbox', 'manage_options', 'inbox-system', 'getInbox','dashicons-email',20); 
             add_menu_page('notifications', 'Notifications', 'manage_options', 'notifications', 'getNofications','dashicons-megaphone',20); 
+            
             /*add_submenu_page('inbox-system','Send Message','Send Message', 'manage_options','send-message','sendMessage');*/
         }else{
             add_menu_page('upload_documents', 'Upload Documents', 'manage_options', 'documents', 'uploadDocuments','dashicons-media-text',20);     
@@ -534,6 +800,7 @@ define('CUSTOM_ADMIN_URL',admin_url());
             add_submenu_page('clients','Edit Client','Edit Client', 'manage_options','edit-client','editClient');
             add_submenu_page('clients','View Client','View Client', 'manage_options','view-client','viewClient');
             add_submenu_page('clients','Delete Client','Delete Client', 'manage_options','delete-client','deleteClient');
+            add_menu_page('deleteInspections', '', 'manage_options', 'deleteInspections', 'deleteInspections','dashicons-megaphone',20); 
         }
         
     } 
@@ -551,6 +818,36 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         }
 
     }
+
+    function deleteInspections(){
+        global $wpdb;
+        $query='select * from `im_inspection_details` where `id`="'.$_GET['inspectionId'].'"';
+        $res=$wpdb->get_row($query,ARRAY_A);
+        if(!empty($res)){
+            $inspectionId=$res['inspectionId'];
+            $getOwnerDetails=getOwnerDetails();
+            $url=ISN_API.'order/'.$inspectionId.'?username='.$getOwnerDetails['username'].'&password='.$getOwnerDetails['password'];
+            $response=deleteInspectionUsingCurl($url);
+            $wpdb->query('delete from `im_inspection_details` where `id`="'.$res['id'].'"'); 
+            $wpdb->query('delete from `im_inspection_assignments` where `inspectionId`="'.$res['id'].'"'); 
+            $wpdb->query('delete from `im_labreports` where `inspectionId`="'.$res['id'].'"'); 
+            $wpdb->query('delete from `im_conversations` where `inspectionId`="'.$res['id'].'"'); 
+            $results=$wpdb->get_results('select * from `im_areas` where `inspectionId`="'.$inspectionId.'"');
+            if(!empty($results)){
+                foreach($results as $k=>$v){
+                   $query=$wpdb->query('delete from `im_areas` where `id`="'.$v['id'].'"'); 
+                   $wpdb->query('delete from `im_issues` where `areaId`="'.$v['id'].'"');
+                   $wpdb->query('delete from `im_samples` where `areaId`="'.$v['id'].'"');
+                }
+            }
+
+        }
+        ?>
+        <script>
+            window.location.href='<?php echo admin_url().'admin.php?page=inspection';?>';
+        </script>
+        <?php
+     }
  
 /* Add Client via App */
     function addClient($data=null){
@@ -558,26 +855,95 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         $records=$wpdb->get_row('select * from `im_clients` where `email`="'.$data['email'].'"');
         if(!empty($records)){
            response(0,null,'Client already exists.'); 
-        }else{
-            $date=$data['date'];
-            if(!empty($date)){
-              $date=date('Y-m-d',strtotime($data['date']));
-            }
-            $dateOfLoss=$data['dateOfLoss'];
-            if(!empty($dateOfLoss)){
-              $dateOfLoss=date('Y-m-d h:i:a',strtotime($data['dateOfLoss']));
-            }  
-            $inspectionDate=$data['inspectionDate'];
-            if(!empty($inspectionDate)){
-              $inspectionDate=date('Y-m-d h:i:a',strtotime($data['inspectionDate']));
-            }
-            $query='insert into `im_clients`(`inspectorId`,`fullName`,`location`,`phoneNumber`,`email`,`jobNumber`,`date`,`time`,`rehabbedAfterYear`,`inspectionType`,`paymentType`,`inspectionDate`,`inspectionTime`,`isnNotes`,`insuaranceCompany`,`policyNumber`,`claim`,`insuaranceAdjuster`,`claimCount`,`dateOfLoss`,`typeOfLoss`,`remedeationCompany`,`publicAdjuster`,`referralSource`) values("'.$data['userId'].'","'.$data['fullName'].'","'.$data['location'].'","'.$data['phoneNumber'].'","'.$data['email'].'","'.$data['jobNumber'].'","'.$date.'","'.$data['time'].'","'.$data['rehabbedAfterYear'].'","'.$data['inspectionType'].'","'.$data['paymentType'].'","'.$inspectionDate.'","'.$data['inspectionTime'].'","'.$data['isnNotes'].'","'.$data['insuaranceCompany'].'","'.$data['policyNumber'].'","'.$data['claim'].'","'.$data['insuaranceAdjuster'].'","'.$data['claimCount'].'","'.$dateOfLoss.'","'.$data['typeOfLoss'].'","'.$data['remedeationCompany'].'","'.$data['publicAdjuster'].'","'.$data['referralSource'].'")';
+        }else{            
+            $query='insert into `im_clients`(`inspectorId`,`fullName`,`location`,`phoneNumber`,`email`) values("'.$data['userId'].'","'.$data['fullName'].'","'.$data['location'].'","'.$data['phoneNumber'].'","'.$data['email'].'")';
             $wpdb->query($query);
-            return $wpdb->insert_id;
-      }
+            $last_client_id= $wpdb->insert_id;
+            if(!empty($last_client_id)){
+                $clientData=array(
+                    'firstname'=>$data['fullName'],
+                    'lastname'=>'',
+                    'displayname'=>$data['fullName'],
+                    'emailaddress'=>$data['email'],
+                    'address1'=>$data['location'],
+                    'address2'=>'',
+                    'city'=>'',
+                    'state'=>'',
+                    'zip'=>'',
+                    'workphone'=>'',
+                    'homephone'=>'',
+                    'mobilephone'=>$data['phoneNumber'],
+                    'workfax'=>'',
+                    'homefax'=>''
+                );
+                $getOwnerDetails=getOwnerDetails();
+                $url=ISN_API.'client?username='.$getOwnerDetails['username'].'&password='.$getOwnerDetails['password'];
+                $response=useCurl($url,$clientData); 
+                $wpdb->query('update `im_clients` set `clientId`="'.$response['id'].'" where `id`="'.$last_client_id.'"');                
+            }
+            return $last_client_id;
+        }
        
         
     }
+    function getClientInspectionDetails($clientId=null){
+        global $wpdb;
+        $dbId=getDbClientId($clientId);
+        $row=$wpdb->get_row('select `id`,`jobNumber`,`time`,`date`,`rehabbedAfterYear`,`inspectionType`,`paymentType`,`inspectionDate`,`inspectionTime`,`isnNotes`,`insuaranceCompany`,`policyNumber`,`claim`,`insuaranceAdjuster`,`claimCount`,`dateOfLoss`,`typeOfLoss`,`remedeationCompany`,`publicAdjuster`,`referralSource` from `im_new_inspections` where `clientId`="'.$dbId.'" order by id asc',ARRAY_A);
+        return $row;
+        
+    }
+
+    function getClientId($clientId=null){
+        global $wpdb;
+        $query=$wpdb->get_row('select `clientId` from `im_clients` where `id`="'.$clientId.'"',ARRAY_A);
+        return $query['clientId'];
+    }
+    function getDbClientId($isnClientId=null){
+        global $wpdb;
+        $query=$wpdb->get_row('select `id` from `im_clients` where `clientId`="'.$isnClientId.'"',ARRAY_A);
+        return $query['id'];
+    }
+    function getInspectionIsnId($dbinspectionId=null){
+        global $wpdb;
+        $query=$wpdb->get_row('select `inspectionId` from `im_inspection_details` where `id`="'.$dbinspectionId.'"',ARRAY_A);
+        return $query['inspectionId'];
+    }
+    function getInspectorId($userId=null){
+        return get_user_meta($userId,'isnServerUserId',true);
+    }
+
+    function useCurl($url,$data){
+        $handle = curl_init($url);
+        curl_setopt($handle, CURLOPT_POST, true);
+        curl_setopt($handle, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($handle,CURLOPT_RETURNTRANSFER,TRUE);
+        $resp=curl_exec($handle);
+        $dnes= json_decode($resp,true);
+        curl_close($handle);
+        return $dnes;
+    }
+    function deleteUsingCurl($url){
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return $result;
+    }
+    function deleteInspectionUsingCurl($url){
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return $result;
+    }
+
 
     function getNofications(){
         include('admin-templates/notifications.php');     
@@ -802,12 +1168,23 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         die;
     }
 
+    add_action('wp_ajax_assignNewReporter','assignNewReporter');
+    add_action('wp_ajax_nopriv_assignNewReporter','assignNewReporter');
+    function assignNewReporter(){
+        global $wpdb;
+        $wpdb->query('update `im_inspection_assignments` set `reporterId`="'.$_POST['reporterId'].'" where `inspectionId`="'.$_POST['inspectionId'].'"');
+        echo json_encode(array('status'=>'true','message'=>'New Reporter has been assigned to the selected inspection.'));
+        die;
+    }
+
+
+
     add_action('wp_ajax_getMessages','getMessages');
     add_action('wp_ajax_nopriv_getMessages','getMessages');
     function getMessages(){
         session_start();
-        $userDetails=get_user_by('id',get_current_user_id());
-        $conversationID=getConversationId(get_current_user_id(),$_POST['usrId'],$userDetails->roles[0]);
+        $userDetails=get_user_by('id',get_current_user_id());      $conversationID=getConversationId(get_current_user_id(),$_POST['usrId'],$_POST['inspectionId'],$userDetails->roles[0]);
+        
         global $wpdb;
         $results=$wpdb->get_results('select * from `im_chats` where `conversationId`="'.$conversationID.'" order by id desc',ARRAY_A);
         $_SESSION['msgCount']=count($results);
@@ -849,8 +1226,8 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
     function getMessagesAjax(){
         session_start();
         $userDetails=get_user_by('id',get_current_user_id());
-        $conversationID=getConversationIdOnly(get_current_user_id(),$_POST['usrId']);
-        global $wpdb;
+       $conversationID=getConversationIdOnly(get_current_user_id(),$_POST['usrId'],$_POST['inspectionId']);
+       global $wpdb;
         $results=$wpdb->get_results('select * from `im_chats` where `conversationId`="'.$conversationID.'" order by id desc',ARRAY_A);
         $html='';
         if($_SESSION['msgCount']<count($results)){
@@ -895,8 +1272,7 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
     add_action('wp_ajax_nopriv_send_message','send_message');
     function send_message(){
         global $wpdb;
-        $userDetails=get_user_by('id',get_current_user_id());
-        $conversationId=getConversationId(get_current_user_id(),$_POST['toUserId'],$userDetails->roles[0]);
+        $userDetails=get_user_by('id',get_current_user_id());        $conversationId=getConversationId(get_current_user_id(),$_POST['toUserId'],$_POST['inspectionId'],$userDetails->roles[0]);
         $return='';
         if(!empty($_FILES['file']['name'])){
             $upload_dir = wp_upload_dir(); 
@@ -915,7 +1291,7 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         $email_template=str_replace('[MESSAGE]',$finalContent,$email_template);
         send_email($crntUserId->data->user_email,'New Message Received',$email_template);
         insert_notification(get_current_user_id(),$_POST['toUserId'],$lastInsertId,'1',$finalContent); 
-        echo json_encode(array('status'=>'true','message'=>'Your message has been sent.'));
+        echo json_encode(array('status'=>'true','message'=>'Your message has been sent.','conversationId'=>$conversationId,'inspectionId'=>$_POST['inspectionId']));
         die;
     }
 
@@ -1020,6 +1396,9 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         }
       ?>
     <style>
+        #toplevel_page_deleteInspections{
+            display: none;
+        }
         #dolly{
             display: none;
         }
@@ -1030,6 +1409,7 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
     <script>
     var SITE_URL='<?php echo site_url();?>';   
     jQuery(document).ready(function(){  
+        jQuery('#toplevel_page_deleteInspections').hide();
         jQuery('#toplevel_page_inspection-reports ul li:nth-child(3)').hide();
         jQuery('#toplevel_page_inspection-reports ul li:nth-child(4)').hide();
         jQuery('.sideBarContainer ul li:first a').trigger('click');
@@ -1083,7 +1463,13 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
                        $user_id= $emailExists;
                     }else{
                        $user_id= $usernameExists; 
-                    }                    
+                    }
+                    $role=$user_id[0]->roles;
+                    if($role=='deactivated'){
+                      wp_logout();
+                      wp_redirect(home_url().'/portal');
+                      die;
+                    }
                     wp_update_user(array(
                         'ID' => $user_id,
                         'display_name' => $records['me']['firstname'].' '.$records['me']['lastname']
@@ -1122,6 +1508,14 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
     }
     add_action('wp_authenticate', 'customcode', 30, 2);
 
+    function the_login_message( $message ) {
+        if ( empty($message) ){
+            return "<p>Welcome to this site. Please log in to continue</p>";
+        } else {
+            return $message;
+        }
+    }
+    //add_filter( 'login_message', 'the_login_message' );
     function se_154951_add_admin_body_class( $classes ) {
         return "$classes admin-color-coffee";
 
@@ -1130,7 +1524,7 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
     add_filter( 'admin_body_class', 'se_154951_add_admin_body_class' );
 
     function afterLogin( $user_login, $user ) {
-        if($user->roles[0]=='inspector'){
+        if($user->roles[0]=='inspector' || $user->roles[0]=='deactivated'){
             wp_logout();
             wp_redirect(home_url().'/portal');
             die;
@@ -1165,14 +1559,14 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
     }
 
     /* Get Conversation ID */
-    function getConversationId($sender=null,$receiver=null,$type=null){
+    function getConversationId($sender=null,$receiver=null,$inspectionId=null,$type=null){
       global $wpdb;
-      $result=$wpdb->get_row('select * from `im_conversations` where (`senderId`="'.$sender.'" and `receiverId`="'.$receiver.'") or (`receiverId`="'.$sender.'" and `senderId`="'.$receiver.'")',ARRAY_A);
+      $result=$wpdb->get_row('select * from `im_conversations` where (`senderId`="'.$sender.'" and `receiverId`="'.$receiver.'" and `inspectionId`="'.$inspectionId.'") or (`receiverId`="'.$sender.'" and `senderId`="'.$receiver.'" and `inspectionId`="'.$inspectionId.'")',ARRAY_A);
        if(!empty($result)){
          $id=$result['id'];  
        }else{
             if($type!='inspector'){
-                $wpdb->query('insert into `im_conversations`(`senderId`,`receiverId`) values("'.$sender.'","'.$receiver.'")');
+                $wpdb->query('insert into `im_conversations`(`senderId`,`receiverId`,`inspectionId`) values("'.$sender.'","'.$receiver.'","'.$inspectionId.'")');
                 $id=$wpdb->insert_id;  
             }else{
                 $id='';
@@ -1181,9 +1575,9 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
        return $id;
    } 
 
-   function getConversationIdOnly($sender=null,$receiver=null){
+   function getConversationIdOnly($sender=null,$receiver=null,$inspectionId=null){
       global $wpdb;
-      $result=$wpdb->get_row('select * from `im_conversations` where (`senderId`="'.$sender.'" and `receiverId`="'.$receiver.'") or (`receiverId`="'.$sender.'" and `senderId`="'.$receiver.'")',ARRAY_A);
+      $result=$wpdb->get_row('select * from `im_conversations` where (`senderId`="'.$sender.'" and `receiverId`="'.$receiver.'" and `inspectionId`="'.$inspectionId.'") or (`receiverId`="'.$sender.'" and `senderId`="'.$receiver.'" and `inspectionId`="'.$inspectionId.'")',ARRAY_A);
        if(!empty($result)){
          $id=$result['id'];  
        }else{
@@ -1387,6 +1781,17 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
             return 'No Reporter is Active on this inspection.';
         }
         
+    } 
+    function getReporterDetails($inspectionId=null){
+        global $wpdb;
+        $query='select * from `im_inspection_assignments` where `inspectionId`="'.$inspectionId.'"';
+        $row=$wpdb->get_row($query,ARRAY_A);
+        if(!empty($row['reporterId'])){
+           return $row['reporterId']; 
+        }else{
+           return false;
+        }
+        
     }
 
     
@@ -1438,6 +1843,26 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         $records=$wpdb->get_results('select * from `im_inspection_details` where `status`="1" order by id desc');
         return $records;
     }
+
+    function pastDaysDues(){
+        global $wpdb;
+        $records=$wpdb->get_results('select * from `im_inspection_details` where `status` in("0","1") order by id desc',ARRAY_A);
+        $array=array();
+        if(!empty($records)){
+            foreach($records as $k=>$v){
+                $date1=date_create(date('Y-m-d',strtotime($v['inspectionDate'])));
+                $date2=date_create(date('Y-m-d',time()));
+                $diff=date_diff($date1,$date2);
+                if(!empty($diff->days)){
+                    $array[]=$v['id'];
+                }
+            }
+            
+        }  
+        return $array;
+    }
+
+
     add_action('init', 'sampleType');
     function sampleType() {
         register_post_type('sampletypes', array(
@@ -1524,15 +1949,54 @@ window.location.href='<?php echo admin_url().'admin.php?page=editArea&areaId='.$
         }
         return $array;  
     }
+
     function getIssueDetails($issueId){
         global $wpdb;
         $records=$wpdb->get_row('select * from `im_issues` where `id`="'.$issueId.'"',ARRAY_A);  
         return $records;  
     }
+
     function checkReportStatus($inspectionId=null){
         global $wpdb;
         $records=$wpdb->get_row('select * from `im_labreports` where `inspectionId`="'.$inspectionId.'"',ARRAY_A);  
         return $records;  
+    }
+
+    function getOwnerDetails(){
+        global $wpdb;
+        $row=$wpdb->get_row('select `username`,`password` from `im_owner_details` order  by id desc',ARRAY_A);
+        return $row;
+    }
+    function getSubmittedStatus($inspectionId=null){
+        global $wpdb;
+        $row=$wpdb->get_row('select * from `im_inspection_details` where `inspectionId`="'.$inspectionId.'"',ARRAY_A);
+        if(!empty($row)){
+           $submit='1'; 
+        }else{
+            $submit='0'; 
+        }
+        return $submit;
+   }
+    function getAllReporter(){
+        global $wpdb;
+        $args = array(
+             'role' => 'subscriber',
+             'orderby' => 'ID',
+             'order' => 'DESC',
+             'fields'=>array('ID','display_name')
+        );
+        $getUsers=get_users($args);
+        return $getUsers;
+    }
+    function getConversationIdByInspection($conversationId=null){
+        global $wpdb;
+        $row=$wpdb->get_row('select * from `im_conversations` where `id`="'.$conversationId.'"',ARRAY_A);
+        if(!empty($row)){
+           $inspectionId=$row['inspectionId']; 
+        }else{
+           $inspectionId=''; 
+        }
+        return $inspectionId;
     }
 
 ?>
